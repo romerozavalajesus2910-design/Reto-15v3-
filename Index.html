@@ -1,1 +1,176 @@
 
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reto 15 V3</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101426;color:white;font-family:Arial,sans-serif}
+header{background:#20264a;padding:22px 15px;text-align:center}
+header h1{margin:0;color:#ffd447;font-size:30px}
+header p{margin-bottom:0;color:#d7ddff}
+main{max-width:520px;margin:auto;padding:16px}
+.card{background:#202642;border:1px solid #384264;border-radius:17px;padding:18px;margin-bottom:15px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.stat{text-align:center;background:#30395c;padding:12px 4px;border-radius:12px}
+.stat strong{display:block;color:#ffd447;font-size:23px;margin-bottom:5px}
+button{border:0;border-radius:12px;padding:14px;width:100%;font-weight:bold;font-size:16px;cursor:pointer;margin-top:9px}
+.primary{background:#ffd447;color:#17182a}
+.secondary{background:#39466d;color:white}
+h2{margin-top:0;font-size:20px}
+#reto{font-size:21px;line-height:1.5;text-align:center;padding:18px 0}
+#mensaje{text-align:center;color:#a8f5c4;min-height:22px}
+.progress{height:9px;background:#414969;border-radius:10px;overflow:hidden}
+#barra{height:100%;width:0;background:#ffd447;transition:width .3s}
+footer{text-align:center;color:#9ca7c8;font-size:12px;padding:15px}
+</style>
+</head>
+<body>
+<header>
+<h1>🎯 RETO 15 V3</h1>
+<p>¡Acepta el reto y supera tu récord!</p>
+</header>
+
+<main>
+<div class="card">
+<h2>🏆 Tu progreso</h2>
+<div class="stats">
+<div class="stat"><strong id="puntos">0</strong>Puntos</div>
+<div class="stat"><strong id="nivel">1</strong>Nivel</div>
+<div class="stat"><strong id="record">0</strong>Récord</div>
+</div>
+<p>Progreso al siguiente nivel</p>
+<div class="progress"><div id="barra"></div></div>
+<p id="racha">🔥 Racha: 0</p>
+</div>
+
+<div class="card">
+<h2>🎮 Tu reto de hoy</h2>
+<div id="reto">Pulsa el botón para comenzar tu aventura.</div>
+<p id="mensaje"></p>
+<button class="primary" id="nuevo" onclick="nuevoReto()">EMPEZAR RETO</button>
+<button class="secondary" id="hecho" onclick="completar()" disabled>¡RETO COMPLETADO!</button>
+</div>
+
+<div class="card">
+<h2>📋 Cómo jugar</h2>
+<p>1. Pulsa “Empezar reto”.</p>
+<p>2. Realiza la actividad que aparece.</p>
+<p>3. Marca el reto como completado.</p>
+<p>4. Gana puntos ficticios y sube de nivel.</p>
+<p>Los retos son de entretenimiento y no requieren pagar para jugar.</p>
+</div>
+
+<div class="card">
+<h2>📚 Historial de retos</h2>
+<div id="historial">Todavía no has completado ningún reto.</div>
+<button class="secondary" onclick="reiniciar()">Reiniciar mi progreso</button>
+</div>
+</main>
+
+<footer>
+Reto 15 V3 · Entretenimiento solamente.<br>
+Los puntos no tienen valor monetario ni se pueden retirar.
+</footer>
+
+<script>
+const retos=[
+"Camina durante 5 minutos y disfruta el momento.",
+"Di tres cosas por las que te sientas agradecido.",
+"Aprende una palabra nueva y recuerda su significado.",
+"Haz 10 estiramientos suaves.",
+"Escucha tu canción favorita.",
+"Cuenta un chiste a alguien y comparte una sonrisa.",
+"Ordena un pequeño espacio de tu habitación.",
+"Dibuja algo usando solamente tu imaginación.",
+"Recuerda una meta que quieras cumplir este mes.",
+"Bebe un vaso de agua si tienes sed.",
+"Escribe una frase positiva para tu día.",
+"Observa tu entorno y encuentra cinco cosas azules.",
+"Dedica cinco minutos a descansar sin pantalla.",
+"Piensa en una habilidad que quieras aprender.",
+"Envía un saludo amable a una persona."
+];
+
+let datos;
+try{
+datos=JSON.parse(localStorage.getItem("reto15v3"))||{};
+}catch(e){datos={};}
+
+let puntos=Number(datos.puntos)||0;
+let record=Number(datos.record)||0;
+let racha=Number(datos.racha)||0;
+let historial=Array.isArray(datos.historial)?datos.historial:[];
+let actual=null;
+let usados=[];
+
+function guardar(){
+try{
+localStorage.setItem("reto15v3",JSON.stringify({
+puntos,record,racha,historial
+}));
+}catch(e){}
+}
+
+function actualizar(){
+document.getElementById("puntos").textContent=puntos;
+document.getElementById("nivel").textContent=Math.floor(puntos/50)+1;
+document.getElementById("record").textContent=record;
+document.getElementById("racha").textContent="🔥 Racha: "+racha;
+document.getElementById("barra").style.width=(puntos%50)*2+"%";
+document.getElementById("historial").innerHTML=historial.length
+?historial.slice(0,8).map(x=>"<p>⭐ "+escapar(x)+"</p>").join("")
+:"Todavía no has completado ningún reto.";
+guardar();
+}
+
+function escapar(texto){
+return String(texto).replace(/[&<>"']/g,c=>({
+"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+}[c]));
+}
+
+function nuevoReto(){
+if(usados.length===retos.length)usados=[];
+let disponibles=retos.map((r,i)=>i).filter(i=>!usados.includes(i));
+let i=disponibles[Math.floor(Math.random()*disponibles.length)];
+usados.push(i);
+actual=retos[i];
+document.getElementById("reto").textContent=actual;
+document.getElementById("mensaje").textContent="";
+document.getElementById("hecho").disabled=false;
+document.getElementById("nuevo").textContent="OTRO RETO";
+}
+
+function completar(){
+if(!actual)return;
+puntos+=15;
+racha++;
+record=Math.max(record,puntos);
+historial.unshift(actual);
+historial=historial.slice(0,30);
+actual=null;
+document.getElementById("reto").textContent="¡Excelente! 🎉";
+document.getElementById("mensaje").textContent="+15 puntos ficticios";
+document.getElementById("hecho").disabled=true;
+document.getElementById("nuevo").textContent="SIGUIENTE RETO";
+actualizar();
+}
+
+function reiniciar(){
+if(!confirm("¿Quieres borrar tu progreso de este teléfono?"))return;
+puntos=0;record=0;racha=0;historial=[];actual=null;usados=[];
+document.getElementById("reto").textContent="Pulsa el botón para comenzar tu aventura.";
+document.getElementById("mensaje").textContent="";
+document.getElementById("hecho").disabled=true;
+document.getElementById("nuevo").textContent="EMPEZAR RETO";
+actualizar();
+}
+
+actualizar();
+</script>
+</body>
+</html>
